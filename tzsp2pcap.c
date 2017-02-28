@@ -214,12 +214,14 @@ int main(int argc, char **argv) {
 		goto err_cleanup_pipe;
 	}
 
-	pcap_t *pcap = pcap_open_dead(DLT_EN10MB, recv_buffer_size);
+	pcap_t *pcap = pcap_open_dead(DLT_IEEE802_11_RADIO, recv_buffer_size);
 	if (!pcap) {
 		fprintf(stderr, "Could not init pcap\n");
 		retval = -1;
 		goto err_cleanup_tzsp;
 	}
+
+	pcap_set_datalink(pcap, DLT_IEEE802_11_RADIO);
 	pcap_dumper_t *pcap_dumper = pcap_dump_open(pcap, out_filename);
 	if (!pcap_dumper) {
 		fprintf(stderr, "Could not open output file: %s\n", pcap_geterr(pcap));
@@ -360,8 +362,26 @@ next_packet:
 			.caplen = readsz - (p - recv_buffer),
 			.len = readsz - (p - recv_buffer),
 		};
+		struct {
+			u_int8_t        it_version;     /* set to 0 */
+			u_int8_t        it_pad;
+			u_int16_t       it_len;         /* entire length */
+			u_int32_t       it_present;     /* fields present */
+		} __attribute__((__packed__)) rtap_hdr;
+
+		rtap_hdr.it_version = 0;
+		rtap_hdr.it_pad = 0;
+		rtap_hdr.it_len = sizeof(rtap_hdr);
+		rtap_hdr.it_present = 0;
+
+		char *fakep = malloc (pcap_hdr.len + sizeof(rtap_hdr));
+		memcpy (fakep, &rtap_hdr, sizeof(rtap_hdr));
+		memcpy (fakep + sizeof(rtap_hdr), p, pcap_hdr.len);
+		pcap_hdr.len += sizeof(rtap_hdr);
+		pcap_hdr.caplen += sizeof(rtap_hdr);
 		gettimeofday(&pcap_hdr.ts, NULL);
-		pcap_dump((unsigned char*) pcap_dumper, &pcap_hdr, (unsigned char *) p);
+		pcap_dump((unsigned char*) pcap_dumper, &pcap_hdr, (unsigned char *) fakep);
+		free (fakep);
 
 		// since pcap_dump doesn't report errors directly, we have
 		// to approximate by checking its underlying file.
