@@ -1,0 +1,14 @@
+Any ideas?
+# make
+gcc -o tzsp2pcap -O2  -lpcap tzsp2pcap.c
+/usr/bin/ld: /tmp/ccNTmLYz.o: in function `main':
+tzsp2pcap.c:(.text.startup+0x228): undefined reference to `pcap_open_dead'
+/usr/bin/ld: tzsp2pcap.c:(.text.startup+0x248): undefined reference to `pcap_set_datalink'
+/usr/bin/ld: tzsp2pcap.c:(.text.startup+0x255): undefined reference to `pcap_dump_open'
+/usr/bin/ld: tzsp2pcap.c:(.text.startup+0x26d): undefined reference to `pcap_dump_file'
+/usr/bin/ld: tzsp2pcap.c:(.text.startup+0x48d): undefined reference to `pcap_geterr'
+/usr/bin/ld: tzsp2pcap.c:(.text.startup+0x4af): undefined reference to `pcap_close'
+/usr/bin/ld: tzsp2pcap.c:(.text.startup+0x675): undefined reference to `pcap_dump'
+/usr/bin/ld: tzsp2pcap.c:(.text.startup+0x6cd): undefined reference to `pcap_dump_close'
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:5: tzsp2pcap] Error 1
